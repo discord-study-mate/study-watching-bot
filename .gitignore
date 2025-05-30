@@ -1,0 +1,9 @@
+.idea
+
+.env
+
+## __pycache__ 디렉토리를 Git 에서 제외
+__pycache__/
+*.pyc
+
+.DS_Store
