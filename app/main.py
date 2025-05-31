@@ -1,5 +1,7 @@
 import discord, asyncio, logging
 
+from app.common.config.config import DISCORD_TOKEN
+
 # Gateway Intents 설정
 intents = discord.Intents.default()
 
@@ -41,5 +43,11 @@ async def on_disconnect():
 
 # 봇 실행
 if __name__ == "__main__":
+    # 로깅 설정
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
     logger.info("⚙️ 봇 실행 준비 중...")
-    # client.run(DISCORD_TOKEN)
+    
+    client.run(DISCORD_TOKEN)
