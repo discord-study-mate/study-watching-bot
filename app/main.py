@@ -1,6 +1,7 @@
 import discord, asyncio, logging
 
 from app.common.config.config import DISCORD_TOKEN
+from app.common.config.database import test_connection
 
 # Gateway Intents 설정
 intents = discord.Intents.default()
@@ -28,7 +29,7 @@ async def on_ready():
     # DB 연결 테스트
     # DB 는 기존 RDS 에서 MongoDB 활용할 예정
     try:
-        # test_connection()  # DB 연결 테스트 실행 (활성화 시 주석 해제)
+        # test_connection()  # DB 연결 테스트 실행 -> MongoDB Atlas 연결 설정 후 실행할 것
         logger.info("✅ DB에 성공적으로 연결되었습니다.")
 
     except Exception as e:
