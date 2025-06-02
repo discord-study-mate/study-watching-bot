@@ -1,7 +1,7 @@
 import discord, asyncio, logging
 
 from app.common.config.config import DISCORD_TOKEN
-from app.common.config.database import test_connection
+from app.common.config.connect_database_test import test_connection
 
 # Gateway Intents 설정
 intents = discord.Intents.default()

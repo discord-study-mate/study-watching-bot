@@ -1,0 +1,38 @@
+name: Deploy to GCP VM
+
+on:
+  push:
+    branches: [ main ]  # main 브랜치에 푸시될 때 실행
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Deploy to VM
+      run: |
+        # 코드를 VM에 복사 (.env 파일 제외)
+        gcloud compute scp --recurse --exclude='.env' ./ ${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot --zone=${{ secrets.GCP_INSTANCE_ZONE }}
+        
+        # SSH로 VM에 접속하여 배포
+        gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} --zone=${{ secrets.GCP_INSTANCE_ZONE }} --command="
+          cd ~/discord-bot
+          docker-compose down
+          docker-compose up -d --build
+        "
+
+    - name: Deployment status
+      run: |
+        echo "✅ Deployment completed successfully!"
+        gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} --zone=${{ secrets.GCP_INSTANCE_ZONE }} --command="
+          docker ps | grep discord-bot
+        "
