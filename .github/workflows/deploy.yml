@@ -25,7 +25,12 @@ jobs:
 
     - name: Deploy to VM
       run: |
+        # .env 파일 생성
+        echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" > .env.prod
+        echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env.prod
+        
         gcloud compute scp --recurse ./ ${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot --zone=${{ secrets.GCP_INSTANCE_ZONE }}
+        gcloud compute scp .env.prod ${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot/.env --zone=${{ secrets.GCP_INSTANCE_ZONE }}
         
         gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} --zone=${{ secrets.GCP_INSTANCE_ZONE }} --command="
           cd ~/discord-bot
