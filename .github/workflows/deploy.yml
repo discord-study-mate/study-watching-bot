@@ -21,7 +21,7 @@ jobs:
     - name: Deploy to VM
       run: |
         # 코드를 VM에 복사 (.env 파일 제외)
-        gcloud compute scp --recurse --exclude='.env' ./ ${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot --zone=${{ secrets.GCP_INSTANCE_ZONE }}
+        gcloud compute scp --recurse ./ ${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot --zone=${{ secrets.GCP_INSTANCE_ZONE }}
         
         # SSH로 VM에 접속하여 배포
         gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} --zone=${{ secrets.GCP_INSTANCE_ZONE }} --command="
