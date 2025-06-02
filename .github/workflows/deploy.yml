@@ -30,20 +30,20 @@ jobs:
         echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env.prod
 
         # VM에서 기존 디렉토리 정리 및 새로 생성
-        gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} --zone=${{ secrets.GCP_INSTANCE_ZONE }} --command="
+        gcloud compute ssh gwinvade99@${{ secrets.GCP_INSTANCE_NAME }} --zone=${{ secrets.GCP_INSTANCE_ZONE }} --command="
           sudo rm -rf ~/discord-bot
           mkdir -p ~/discord-bot
         "
 
         # .git 폴더 제외하고 필요한 파일들만 복사
-        gcloud compute scp app/ ${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot/ --recurse --zone=${{ secrets.GCP_INSTANCE_ZONE }}
-        gcloud compute scp Dockerfile ${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot/ --zone=${{ secrets.GCP_INSTANCE_ZONE }}
-        gcloud compute scp docker-compose.yml ${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot/ --zone=${{ secrets.GCP_INSTANCE_ZONE }}
-        gcloud compute scp requirements.txt ${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot/ --zone=${{ secrets.GCP_INSTANCE_ZONE }}
-        gcloud compute scp .env.prod ${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot/.env --zone=${{ secrets.GCP_INSTANCE_ZONE }}
+        gcloud compute scp app/ gwinvade99@${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot/ --recurse --zone=${{ secrets.GCP_INSTANCE_ZONE }}
+        gcloud compute scp Dockerfile gwinvade99@${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot/ --zone=${{ secrets.GCP_INSTANCE_ZONE }}
+        gcloud compute scp docker-compose.yml gwinvade99@${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot/ --zone=${{ secrets.GCP_INSTANCE_ZONE }}
+        gcloud compute scp requirements.txt gwinvade99@${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot/ --zone=${{ secrets.GCP_INSTANCE_ZONE }}
+        gcloud compute scp .env.prod gwinvade99@${{ secrets.GCP_INSTANCE_NAME }}:~/discord-bot/.env --zone=${{ secrets.GCP_INSTANCE_ZONE }}
 
         # 배포 실행
-        gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} --zone=${{ secrets.GCP_INSTANCE_ZONE }} --command="
+        gcloud compute ssh gwinvade99@${{ secrets.GCP_INSTANCE_NAME }} --zone=${{ secrets.GCP_INSTANCE_ZONE }} --command="
           cd ~/discord-bot
           docker-compose down || true
           docker-compose up -d --build
