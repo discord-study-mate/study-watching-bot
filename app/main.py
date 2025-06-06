@@ -41,6 +41,10 @@ async def on_ready():
 async def on_disconnect():
     logger.info("디스코드 봇 연결이 종료되었습니다.")
 
+@client.event
+async def on_resumed():
+    logger.info("디스코드 연결이 성공적으로 복구되었습니다.")
+
 
 # 봇 실행
 if __name__ == "__main__":
