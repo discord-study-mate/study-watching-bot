@@ -28,6 +28,7 @@ jobs:
         # .env 파일 생성
         echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" > .env.prod
         echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env.prod
+        echo "LOG_CHANNEL_ID=${{ secrets.LOG_CHANNEL_ID }}" >> .env.prod 
 
         # VM에서 기존 디렉토리 정리 및 새로 생성
         gcloud compute ssh gwinvade99@${{ secrets.GCP_INSTANCE_NAME }} --zone=${{ secrets.GCP_INSTANCE_ZONE }} --command="
