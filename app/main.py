@@ -2,7 +2,7 @@ import discord, asyncio, logging
 
 from datetime import datetime, timedelta
 
-from app.common.config.config import DISCORD_TOKEN, LOG_CHANNEL_ID
+from app.common.config.config import DISCORD_TOKEN
 from app.common.config.connect_database_test import test_connection
 from app.models.voice_activity import VoiceActivity
 
@@ -18,12 +18,26 @@ client = discord.Client(intents=intents)
 # 로거 설정
 logger = logging.getLogger(__name__)
 
+def get_user_log_channel(guild, member):
+    """사용자의 개인 로그 채널을 자동으로 찾기"""
+    possible_names = [
+        f"{member.name}-출석-로그",
+        f"{member.display_name}-출석-로그",
+        f"{member.name.lower()}-출석-로그",
+        f"{member.display_name.lower()}-출석-로그"
+    ]
+
+    for channel in guild.text_channels:
+        if channel.name in possible_names:
+            return channel
+
+    return None
+
 # 봇의 상태 메시지
 # 봇이 한번 실행되면 계속 실행됨
 @client.event
 async def on_ready():
     logger.info(f"Logged in as {client.user}")
-    logger.info(f"LOG CHANNEL ID: {LOG_CHANNEL_ID}")
     asyncio.create_task(client.change_presence(status=discord.Status.online))  # 임시 작성된 코드
     await client.change_presence(
         status=discord.Status.online,
@@ -39,20 +53,11 @@ async def on_ready():
     except Exception as e:
         logger.error(f"❌ DB 연결에 실패했습니다. : {e}")
 
-    # 채널 확인
-    log_channel = client.get_channel(LOG_CHANNEL_ID)
-    if log_channel:
-        logger.info(f"로그 채널 찾음 : {log_channel.name}")
-
-        # 테스트 메시지 전송
-        await log_channel.send("봇이 시작되었습니다!")
-    else:
-        logger.error(f"로그 채널을 찾을 수 없습니다. ID : {LOG_CHANNEL_ID}")
 
 @client.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
     # 로그 채널 가져오기
-    log_channel = client.get_channel(LOG_CHANNEL_ID)
+    log_channel = get_user_log_channel(member.guild, member)
 
     # 음성 채널 입장
     if before.channel is None and after.channel is not None:
@@ -67,12 +72,15 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             channel_name=after.channel.name  # 추가
         )
 
-        # 채널에 메시지 전송
+        # 개인 채널에 메시지 전송
         if log_channel:
             now = datetime.now()
             join_time = now.strftime("%Y-%m-%d %H:%M:%S")
-            message = f"{member.display_name}님이 '{after.channel.name}' 채널에 {join_time}에 입장했습니다."
+            message = f"[{join_time}] : {member.display_name}님이 '{after.channel.name}' 채널에 입장했습니다."
             await log_channel.send(message)
+            logger.info(f"📥 {member.display_name}님 개인 로그 채널({log_channel.name})에 입장 메시지 전송")
+        else:
+            logger.warning(f"⚠️ {member.display_name}님의 개인 로그 채널을 찾을 수 없습니다.")
 
     # 음성 채널 퇴장
     elif before.channel is not None and after.channel is None:
@@ -85,11 +93,55 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             channel_id=before.channel.id
         )
 
-        # 채널에 메시지 전송
+        # 개인 채널에 메시지 전송
         if log_channel:
-            leave_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # 밀리초 포함
-            message = f"{member.display_name}님이 '{before.channel.name}' 채널에서 나갔습니다. (퇴장 시간: {leave_time})"
+            leave_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            message = f"[{leave_time}] : {member.display_name}님이 '{before.channel.name}' 채널에서 나갔습니다."
             await log_channel.send(message)
+            logger.info(f"📤 {member.display_name}님 개인 로그 채널({log_channel.name})에 퇴장 메시지 전송")
+        else:
+            logger.warning(f"⚠️ {member.display_name}님의 개인 로그 채널을 찾을 수 없습니다.")
+
+    # 채널 간 이동 (추가)
+    elif before.channel is not None and after.channel is not None and before.channel != after.channel:
+        logger.info(f"{member.name}님이 {before.channel.name} → {after.channel.name} 채널로 이동했습니다.")
+
+        # 1. 이전 채널에서 나간 것으로 DB 처리
+        await VoiceActivity.record_leave(
+            user_id=member.id,
+            guild_id=member.guild.id,
+            channel_id=before.channel.id
+        )
+
+        # 2. 새 채널에 들어간 것으로 DB 처리
+        await VoiceActivity.record_join(
+            user_id=member.id,
+            user_name=member.display_name,
+            guild_id=member.guild.id,
+            channel_id=after.channel.id,
+            channel_name=after.channel.name
+        )
+
+        # 3. 방향성에 따른 메시지 구분
+        if log_channel:
+            now = datetime.now()
+            move_time = now.strftime("%Y-%m-%d %H:%M:%S")
+
+            # 메인 공부방 → 생각의 방 (출튀)
+            if before.channel.name == "메인 공부방" and after.channel.name == "생각의 방":
+                message = f"[{move_time}] : {member.display_name}님이 '{before.channel.name}'에서 '{after.channel.name}' 채널로 이동했습니다. (🚨출튀 감지🚨)"
+
+            # 생각의 방 → 메인 공부방 (복귀)
+            elif before.channel.name == "생각의 방" and after.channel.name == "메인 공부방":
+                message = f"[{move_time}] : {member.display_name}님이 '{before.channel.name}'에서 '{after.channel.name}' 채널로 복귀했습니다. (✅복귀 완료✅)"
+
+            # 기타 이동
+            else:
+                message = f"[{move_time}] : {member.display_name}님이 '{before.channel.name}'에서 '{after.channel.name}' 채널로 이동했습니다."
+
+            await log_channel.send(message)
+            logger.info(f"🔄 {member.display_name}님 개인 로그 채널({log_channel.name})에 이동 메시지 전송")
+
 
 # 봇 종료 처리
 @client.event
