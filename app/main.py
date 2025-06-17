@@ -2,6 +2,7 @@ import discord, asyncio, logging
 
 from app.common.config.config import DISCORD_TOKEN
 from app.common.config.connect_database_test import test_connection
+from app.models.voice_activity import VoiceActivity
 
 # Gateway Intents 설정
 intents = discord.Intents.default()
@@ -35,6 +36,27 @@ async def on_ready():
     except Exception as e:
         logger.error(f"❌ DB 연결에 실패했습니다. : {e}")
 
+@client.event
+async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+    # 음성 채널 입장
+    if before.channel is None and after.channel is not None:
+        logger.info(f"{member.name}님이 {after.channel.name} 채널에 입장했습니다.")
+        await VoiceActivity.record_join(
+            user_id=member.id,
+            user_name=member.display_name,
+            guild_id=member.guild.id,
+            channel_id=after.channel.id,
+            channel_name=after.channel.name  # 추가
+        )
+    
+    # 음성 채널 퇴장
+    elif before.channel is not None and after.channel is None:
+        logger.info(f"{member.name}님이 {before.channel.name} 채널에서 퇴장했습니다.")
+        await VoiceActivity.record_leave(
+            user_id=member.id,
+            guild_id=member.guild.id,
+            channel_id=before.channel.id
+        )
 
 # 봇 종료 처리
 @client.event
@@ -44,7 +66,6 @@ async def on_disconnect():
 @client.event
 async def on_resumed():
     logger.info("디스코드 연결이 성공적으로 복구되었습니다.")
-
 
 # 봇 실행
 if __name__ == "__main__":
