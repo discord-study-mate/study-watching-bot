@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @client.event
 async def on_ready():
     logger.info(f"Logged in as {client.user}")
+    logger.info(f"LOG CHANNEL ID: {LOG_CHANNEL_ID}")
     asyncio.create_task(client.change_presence(status=discord.Status.online))  # 임시 작성된 코드
     await client.change_presence(
         status=discord.Status.online,
@@ -37,6 +38,16 @@ async def on_ready():
 
     except Exception as e:
         logger.error(f"❌ DB 연결에 실패했습니다. : {e}")
+
+    # 채널 확인
+    log_channel = client.get_channel(LOG_CHANNEL_ID)
+    if log_channel:
+        logger.info(f"로그 채널 찾음 : {log_channel.name}")
+
+        # 테스트 메시지 전송
+        await log_channel.send("봇이 시작되었습니다!")
+    else:
+        logger.error(f"로그 채널을 찾을 수 없습니다. ID : {LOG_CHANNEL_ID}")
 
 @client.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
