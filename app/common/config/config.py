@@ -11,5 +11,5 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 # TARGET_TEXT_CHANNEL_ID = int(os.getenv("TARGET_TEXT_CHANNEL_ID"))
 
-# 지각사유 채팅채널
-# LATE_REASON_CHANEL_ID = int(os.getenv("LATE_REASON_CHANEL_ID"))
+# 음성채널 입장/퇴장 로그 -> 채팅에 남길 로그 기록
+LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", 0))  # 추가

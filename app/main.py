@@ -1,6 +1,8 @@
 import discord, asyncio, logging
 
-from app.common.config.config import DISCORD_TOKEN
+from datetime import datetime, timedelta
+
+from app.common.config.config import DISCORD_TOKEN, LOG_CHANNEL_ID
 from app.common.config.connect_database_test import test_connection
 from app.models.voice_activity import VoiceActivity
 
@@ -38,9 +40,14 @@ async def on_ready():
 
 @client.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+    # 로그 채널 가져오기
+    log_channel = client.get_channel(LOG_CHANNEL_ID)
+
     # 음성 채널 입장
     if before.channel is None and after.channel is not None:
         logger.info(f"{member.name}님이 {after.channel.name} 채널에 입장했습니다.")
+
+        # DB 에 저장
         await VoiceActivity.record_join(
             user_id=member.id,
             user_name=member.display_name,
@@ -48,15 +55,30 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             channel_id=after.channel.id,
             channel_name=after.channel.name  # 추가
         )
-    
+
+        # 채널에 메시지 전송
+        if log_channel:
+            now = datetime.now()
+            join_time = now.strftime("%Y-%m-%d %H:%M:%S")
+            message = f"{member.display_name}님이 '{after.channel.name}' 채널에 {join_time}에 입장했습니다."
+            await log_channel.send(message)
+
     # 음성 채널 퇴장
     elif before.channel is not None and after.channel is None:
         logger.info(f"{member.name}님이 {before.channel.name} 채널에서 퇴장했습니다.")
+
+        # DB 업데이트
         await VoiceActivity.record_leave(
             user_id=member.id,
             guild_id=member.guild.id,
             channel_id=before.channel.id
         )
+
+        # 채널에 메시지 전송
+        if log_channel:
+            leave_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # 밀리초 포함
+            message = f"{member.display_name}님이 '{before.channel.name}' 채널에서 나갔습니다. (퇴장 시간: {leave_time})"
+            await log_channel.send(message)
 
 # 봇 종료 처리
 @client.event
