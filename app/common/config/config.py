@@ -13,3 +13,21 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
 # 음성채널 입장/퇴장 로그 -> 채팅에 남길 로그 기록
 LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", 0))  # 추가
+
+# 출석 설정
+USER_STUDY_SCHEDULES = {
+    "juni": {
+        5: {"attendance_start": "12:00", "attendance_end": "14:15", "standard_end": "14:00"},  # 토요일
+        6: {"attendance_start": "12:00", "attendance_end": "14:15", "standard_end": "14:00"},  # 일요일
+    },
+    "앵웅": {
+        0: {"attendance_start": "12:00", "attendance_end": "14:15", "standard_end": "14:00"},  # 월요일
+        1: {"attendance_start": "12:00", "attendance_end": "14:15", "standard_end": "14:00"},  # 화요일
+        2: {"attendance_start": "12:00", "attendance_end": "14:15", "standard_end": "14:00"},  # 수요일
+        3: {"attendance_start": "12:00", "attendance_end": "14:15", "standard_end": "14:00"},  # 목요일
+    },
+    "가가원": {
+        5: {"attendance_start": "12:00", "attendance_end": "14:15", "standard_end": "14:00"},  # 토요일
+        6: {"attendance_start": "12:00", "attendance_end": "14:15", "standard_end": "14:00"},  # 일요일
+    }
+}

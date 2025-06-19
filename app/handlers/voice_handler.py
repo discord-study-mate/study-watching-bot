@@ -6,6 +6,7 @@ from datetime import datetime
 
 from app.models.voice_activity import VoiceActivity
 from app.handlers.channel_utils import get_user_log_channel, get_movement_message
+from app.handlers.attendance_handler import determine_attendance_status, record_attendance
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,20 @@ async def handle_voice_join(member, after_channel):
         channel_id=after_channel.id,
         channel_name=after_channel.name
     )
+
+    # 메인 공부방 입장시 출석 체크
+    if after_channel.name == "메인 공부방":
+        join_time = datetime.now()
+        attendance_status = determine_attendance_status(join_time, member.display_name)
+
+        if attendance_status:  # 출석 체크 시간대인 경우
+            await record_attendance(
+                user_id=member.id,
+                user_name=member.display_name,
+                status=attendance_status,
+                join_time=join_time
+            )
+            logger.info(f"📋 {member.display_name}님 출석 상태: {attendance_status}")
 
     # 개인 채널에 메시지 전송
     log_channel = get_user_log_channel(member.guild, member)
