@@ -14,6 +14,9 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 # 음성채널 입장/퇴장 로그 -> 채팅에 남길 로그 기록
 LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", 0))  # 추가
 
+# 지각/결석 사유 제출 방
+REASON_SUBMIT_CHANNEL_ID = int(os.getenv("REASON_SUBMIT_CHANNEL_ID", 0))  # 추가
+
 # 출석 설정
 USER_STUDY_SCHEDULES = {
     "juni": {

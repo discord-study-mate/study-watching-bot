@@ -1,8 +1,9 @@
 import discord, asyncio, logging
 
-from app.common.config.config import DISCORD_TOKEN
+from app.common.config.config import DISCORD_TOKEN, REASON_SUBMIT_CHANNEL_ID
 from app.common.config.connect_database_test import test_connection
 from app.handlers.voice_handler import handle_voice_join, handle_voice_leave, handle_voice_move
+from app.handlers.message_handler import handle_attendance_message
 
 # Gateway Intents 설정
 intents = discord.Intents.default()
@@ -50,14 +51,26 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     elif before.channel is not None and after.channel is not None and before.channel != after.channel:
         await handle_voice_move(member, before.channel, after.channel)
 
+
 # 봇 종료 처리
 @client.event
 async def on_disconnect():
     logger.info("디스코드 봇 연결이 종료되었습니다.")
 
+
 @client.event
 async def on_resumed():
     logger.info("디스코드 연결이 성공적으로 복구되었습니다.")
+
+
+@client.event
+async def on_message(message):
+    # 봇 자신의 메시지는 무시
+    if message.author == client.user:
+        return
+    # 출석 신고 채널에서의 메시지만 처리
+    if message.channel.id == REASON_SUBMIT_CHANNEL_ID:
+        await handle_attendance_message(message)
 
 # 봇 실행
 if __name__ == "__main__":
